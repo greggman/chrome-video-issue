@@ -1,0 +1,169 @@
+<body>
+
+</body>
+<style>
+pre {
+    margin: 0;
+}
+</style>
+<script src="canvas-toBlob.js"></script>
+<script>
+var queue = [
+  "/video2.mp4",
+  "/video.mp4",
+  "/aa-temp/video1.mp4",
+  "/aa-temp/video2.mp4",
+  "/aa-temp/video3.mp4",
+  "/aa-temp/video4.mp4",
+  "/aa-temp/video5.mp4",
+  "/aa-temp/images/Scan001.jpg",
+  "/aa-temp/images/Scan002.jpg",
+  "/aa-temp/images/Scan003.jpg",
+  "/aa-temp/images/Scan004.jpg",
+  "/aa-temp/images/Scan005.jpg",
+  "/aa-temp/images/Scan006.jpg",
+  "/aa-temp/images/Scan007.jpg",
+  "/aa-temp/images/Scan008.jpg",
+  "/aa-temp/images/Scan009.jpg",
+  "/aa-temp/images/Scan010.jpg",
+];
+
+var maxParallelDownloads = 8;
+var maxSeekTime = 30;
+var imgCount = 0;
+var ctx = document.createElement("canvas").getContext("2d");
+
+function log() {
+  //console.log.apply(console, arguments);
+}
+
+function error() {
+  console.error.apply(console, arguments);
+}
+
+function extname(path) {
+  var pndx = path.lastIndexOf('.');
+  if (pndx >= 0) {
+    return path.substr(pndx);
+  }
+}
+
+var videoExtensions = {
+  ".webm": true,
+  ".mp4": true,
+  ".m4v": true,
+  ".ogv": true,
+};
+function isVideoExtension(filename) {
+  return videoExtensions[extname(filename).toLowerCase()];
+}
+
+function createLoadElements() {
+  var video = document.createElement("video");
+  var image = document.createElement("img");
+  var loadElements = {
+    video: video,
+    image: image,
+  };
+
+  var processNextWithThis = function() {
+    processNext(loadElements);
+  };
+
+  video.addEventListener('loadedmetadata', function(e) {
+    log("loadedmetadata:", e.target.src);
+    var seekTime = Math.min(maxSeekTime, e.target.duration / 2);
+    e.target.currentTime = seekTime;
+    e.target.muted = true;
+    log("seeking to", seekTime);
+  });
+  video.addEventListener('seeked', function(e) {
+    log("seeked:", e.target.sr);
+    e.target.play();
+  });
+  video.addEventListener('playing', function(e) {
+    log("play:", e.target.src);
+    makeThumbnail(e.target, e.target.videoWidth, e.target.videoHeight, "??");
+    e.target.pause();
+    processNextWithThis();
+  });
+  video.addEventListener('error', function(e) {
+    error("could not load:", e.target.src, e);
+    processNextWithThis();
+  });
+
+  image.addEventListener('load', function(e) {
+    log("loaded img:", e.target.src);
+    makeThumbnail(e.target, e.target.naturalWidth, e.target.naturalHeight, "");
+    processNextWithThis();
+  });
+  image.addEventListener('error', function(e) {
+    error("could not load:", e.target.src, e);
+    processNextWithThis();
+  });
+
+  processNextWithThis();
+}
+
+function makeThumbnail(elem, elemWidth, elemHeight, msg) {
+  var txt = document.createTextNode(elem.src);
+  var pre = document.createElement("pre");
+  pre.appendChild(txt);
+  document.body.appendChild(pre);
+  return;
+//  var imageWidth = 200;
+//  var height = elemHeight * imageWidth / elemWidth | 0;
+//  ctx.canvas.width = imageWidth;
+//  ctx.canvas.height = height;
+//  ctx.drawImage(elem, 0, 0, imageWidth, height);
+//  ctx.textBaseline = "top";
+//  ctx.fillStyle = "black";
+//  ctx.fillText(msg, 4, 6);
+//  ctx.fillStyle = "white";
+//  ctx.fillText(msg, 5, 5);
+//  ctx.canvas.toBlob(function(blob) {
+//    var url = URL.createObjectURL(blob);
+//    loadImage(elem.src, url, elem.orig.ndx);
+//  });
+}
+
+//function loadImage(src, url, ndx) {
+//  var img = new Image();
+//  img.addEventListener('load', function() {
+//    addElement(img, img.naturalWidth, img.naturalHeight);
+//  });
+//  img.src = url;
+//  img.orig = {
+//    src: src,
+//    ndx: ndx,
+//  };
+//}
+//
+//function addElement(elem, elemWidth, elemHeight) {
+//  document.body.appendChild(elem);
+//}
+
+function processNext(loadElements) {
+  if (queue.length) {
+    var url = queue.shift();
+    console.log(url);
+    var orig = {
+      ndx: imgCount++,
+    };
+    if (isVideoExtension(url)) {
+      loadElements.video.pause();
+      loadElements.video.src = url;
+      loadElements.video.orig = orig;
+      loadElements.video.load();
+    } else {
+      loadElements.image.src = url;
+      loadElements.image.orig = orig;
+    }
+  }
+}
+
+for (var ii = 0; ii < maxParallelDownloads; ++ii) {
+  createLoadElements();
+}
+
+</script>
