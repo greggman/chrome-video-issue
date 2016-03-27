@@ -34,7 +34,7 @@ var imgCount = 0;
 var ctx = document.createElement("canvas").getContext("2d");
 
 function log() {
-  //console.log.apply(console, arguments);
+  console.log.apply(console, arguments);
 }
 
 function error() {
@@ -78,17 +78,19 @@ function createLoadElements() {
     log("seeking to", seekTime);
   });
   video.addEventListener('seeked', function(e) {
-    log("seeked:", e.target.sr);
+    log("seeked:", e.target.src);
     e.target.play();
   });
   video.addEventListener('playing', function(e) {
     log("play:", e.target.src);
     makeThumbnail(e.target, e.target.videoWidth, e.target.videoHeight, "??");
     e.target.pause();
+    e.target.removeAttribute("src");
     processNextWithThis();
   });
   video.addEventListener('error', function(e) {
     error("could not load:", e.target.src, e);
+    e.target.removeAttribute("src");
     processNextWithThis();
   });
 
