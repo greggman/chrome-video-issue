@@ -85,9 +85,21 @@ function createLoadElements() {
     log("play:", e.target.src);
     makeThumbnail(e.target, e.target.videoWidth, e.target.videoHeight, "??");
     e.target.pause();
+  });
+  video.addEventListener('pause', function(e) {
+    log("pause:", e.target.src);
     e.target.removeAttribute("src");
     processNextWithThis();
   });
+  //["abort",
+  // "ended",
+  // "pause",
+  // "play",
+  //].forEach(function(name) {
+  //    video.addEventListener(name, function(e) {
+  //      log(name + ":", e.target.src);
+  //    });
+  //})
   video.addEventListener('error', function(e) {
     error("could not load:", e.target.src, e);
     e.target.removeAttribute("src");
